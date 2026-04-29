@@ -62,7 +62,6 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: ./delivery-api
-          file: ./delivery-api/Dockerfile
           platforms: ${{ env.BUILD_PLATFORMS }}
           push: ${{ github.event_name != 'pull_request' }}
           provenance: false
@@ -93,7 +92,6 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: ./delivery-worker
-          file: ./delivery-worker/Dockerfile
           platforms: ${{ env.BUILD_PLATFORMS }}
           push: ${{ github.event_name != 'pull_request' }}
           provenance: false
@@ -126,7 +124,6 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: ./delivery-portal
-          file: ./delivery-portal/Dockerfile
           platforms: ${{ env.BUILD_PLATFORMS }}
           push: ${{ github.event_name != 'pull_request' }}
           provenance: false
