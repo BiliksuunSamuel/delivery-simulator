@@ -1,0 +1,289 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  --font-sans: var(--font-sans), ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, sans-serif;
+  --font-mono: var(--font-mono), ui-monospace, SFMono-Regular, Menlo,
+    "JetBrains Mono", monospace;
+
+  --color-brand-navy: #1a2b4a;
+  --color-brand-navy-fg: #fafaf7;
+  --color-brand-orange: #f39a1f;
+  --color-brand-orange-fg: #1a2b4a;
+  --color-brand-coral: #e84b2c;
+  --color-brand-coral-fg: #ffffff;
+  --color-brand-teal: #1fa39b;
+  --color-brand-teal-fg: #ffffff;
+  --color-brand-bg: #fafaf7;
+  --color-brand-surface: #ffffff;
+  --color-brand-surface-2: #ffffff;
+  --color-brand-border: #e5e5e0;
+  --color-brand-muted: #6b7280;
+  --color-brand-muted-bg: #f3f4f2;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+  --background: var(--color-brand-bg);
+  --foreground: var(--color-brand-navy);
+
+  --card: var(--color-brand-surface);
+  --card-foreground: var(--color-brand-navy);
+
+  --popover: var(--color-brand-surface-2);
+  --popover-foreground: var(--color-brand-navy);
+
+  --primary: var(--color-brand-navy);
+  --primary-foreground: var(--color-brand-navy-fg);
+
+  --secondary: var(--color-brand-muted-bg);
+  --secondary-foreground: var(--color-brand-navy);
+
+  --accent: var(--color-brand-orange);
+  --accent-foreground: var(--color-brand-orange-fg);
+
+  --destructive: var(--color-brand-coral);
+
+  --muted: var(--color-brand-muted-bg);
+  --muted-foreground: var(--color-brand-muted);
+
+  --border: var(--color-brand-border);
+  --input: var(--color-brand-border);
+  --ring: var(--color-brand-orange);
+
+  --radius: 0.5rem;
+
+  --chart-1: var(--color-brand-navy);
+  --chart-2: var(--color-brand-orange);
+  --chart-3: var(--color-brand-teal);
+  --chart-4: var(--color-brand-coral);
+  --chart-5: var(--color-brand-muted);
+
+  --sidebar: var(--color-brand-navy);
+  --sidebar-foreground: var(--color-brand-navy-fg);
+  --sidebar-primary: var(--color-brand-orange);
+  --sidebar-primary-foreground: var(--color-brand-orange-fg);
+  --sidebar-accent: rgba(255, 255, 255, 0.06);
+  --sidebar-accent-foreground: var(--color-brand-navy-fg);
+  --sidebar-border: rgba(255, 255, 255, 0.08);
+  --sidebar-ring: var(--color-brand-orange);
+
+  /* Material-style elevation tokens. Tinted with navy-on-light so they
+     read as soft shadows rather than dirty greys. */
+  --shadow-card:
+    0 1px 2px 0 rgba(15, 27, 45, 0.04),
+    0 1px 3px 0 rgba(15, 27, 45, 0.06);
+  --shadow-card-hover:
+    0 2px 4px 0 rgba(15, 27, 45, 0.06),
+    0 4px 12px 0 rgba(15, 27, 45, 0.08);
+  --shadow-popover:
+    0 4px 6px -1px rgba(15, 27, 45, 0.08),
+    0 10px 20px -3px rgba(15, 27, 45, 0.1);
+  --shadow-dialog:
+    0 10px 25px -5px rgba(15, 27, 45, 0.16),
+    0 20px 50px -12px rgba(15, 27, 45, 0.22);
+  --shadow-fab:
+    0 6px 16px -4px rgba(243, 154, 31, 0.4),
+    0 12px 28px -8px rgba(15, 27, 45, 0.18);
+  --shadow-fab-hover:
+    0 10px 24px -4px rgba(243, 154, 31, 0.5),
+    0 16px 36px -10px rgba(15, 27, 45, 0.25);
+}
+
+.dark {
+  --color-brand-navy: #0f1b2d;
+  --color-brand-navy-fg: #e8ecf1;
+  --color-brand-orange: #e89020;
+  --color-brand-orange-fg: #0f1b2d;
+  --color-brand-coral: #d9492c;
+  --color-brand-coral-fg: #ffffff;
+  --color-brand-teal: #26a8a0;
+  --color-brand-teal-fg: #0f1b2d;
+  --color-brand-bg: #0f1b2d;
+  --color-brand-surface: #1a2b4a;
+  --color-brand-surface-2: #243758;
+  --color-brand-border: #2c3f60;
+  --color-brand-muted: #8b95a8;
+  --color-brand-muted-bg: #1f3050;
+
+  --foreground: var(--color-brand-navy-fg);
+  --card-foreground: var(--color-brand-navy-fg);
+  --popover-foreground: var(--color-brand-navy-fg);
+  --secondary-foreground: var(--color-brand-navy-fg);
+
+  --primary: var(--color-brand-orange);
+  --primary-foreground: var(--color-brand-orange-fg);
+
+  --sidebar: var(--color-brand-surface);
+  --sidebar-accent: rgba(255, 255, 255, 0.04);
+  --sidebar-accent-foreground: var(--color-brand-navy-fg);
+  --sidebar-border: var(--color-brand-border);
+
+  /* Dark mode swaps tinted shadows for true blacks with deeper alpha so
+     elevation still reads against the navy surfaces. */
+  --shadow-card:
+    0 1px 2px 0 rgba(0, 0, 0, 0.4),
+    0 1px 3px 0 rgba(0, 0, 0, 0.3);
+  --shadow-card-hover:
+    0 2px 4px 0 rgba(0, 0, 0, 0.45),
+    0 4px 12px 0 rgba(0, 0, 0, 0.35);
+  --shadow-popover:
+    0 4px 6px -1px rgba(0, 0, 0, 0.5),
+    0 10px 20px -3px rgba(0, 0, 0, 0.4);
+  --shadow-dialog:
+    0 10px 25px -5px rgba(0, 0, 0, 0.55),
+    0 20px 50px -12px rgba(0, 0, 0, 0.5);
+  --shadow-fab:
+    0 6px 16px -4px rgba(232, 144, 32, 0.5),
+    0 12px 28px -8px rgba(0, 0, 0, 0.5);
+  --shadow-fab-hover:
+    0 10px 24px -4px rgba(232, 144, 32, 0.6),
+    0 16px 36px -10px rgba(0, 0, 0, 0.55);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-sans);
+    /* cv11 = single-storey 'a', ss01 = open digits, ss03 = curved 'l' — Inter's professional defaults */
+    font-feature-settings: "cv11", "ss01", "ss03";
+  }
+  code,
+  pre,
+  .font-mono {
+    font-family: var(--font-mono);
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+}
+
+/* Leaflet container in dark mode: tone down attribution control text */
+.dark .leaflet-control-attribution {
+  background: rgba(15, 27, 45, 0.8) !important;
+  color: var(--color-brand-muted) !important;
+}
+.dark .leaflet-control-attribution a {
+  color: var(--color-brand-orange) !important;
+}
+
+/* Confine Leaflet's internal z-index stack (panes go up to ~700, controls
+   to ~1000) inside its own container so modals, toasts, dropdowns, and
+   tooltips elsewhere in the app naturally render above any embedded map. */
+.leaflet-container {
+  position: relative;
+  z-index: 0;
+  isolation: isolate;
+}
+
+/* Marker hover scale for the Hubtel map polish */
+.leaflet-marker-icon {
+  transition: transform 150ms ease-out, filter 150ms ease-out;
+  transform-origin: center bottom;
+}
+.leaflet-marker-icon:hover {
+  transform: scale(1.15);
+  filter: brightness(1.05);
+  z-index: 1000 !important;
+}
+
+/* Strip the native browser spinners on number inputs — the lat/lng/battery
+   fields look cleaner without the up/down chrome and we provide sliders
+   or +/- via the surrounding form. */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* Material-style tap ripple. The host element supplies `position: relative;
+   overflow: hidden;` and renders one .ripple span per click — see
+   `components/domain/Ripple.tsx`. The span starts at the click coordinate
+   with zero size and expands to fill the host while fading out. */
+@keyframes ripple-grow {
+  0% {
+    transform: scale(0);
+    opacity: 0.35;
+  }
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+.ripple {
+  position: absolute;
+  border-radius: 9999px;
+  pointer-events: none;
+  background: currentColor;
+  opacity: 0.25;
+  transform: scale(0);
+  animation: ripple-grow 600ms ease-out forwards;
+}
+
+/* Calmer Chrome autofill background — by default Chrome paints a saturated
+   blue box that clashes with the brand surface. */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--foreground);
+  -webkit-box-shadow: 0 0 0 1000px var(--background) inset;
+  caret-color: var(--foreground);
+  transition: background-color 5000s ease-in-out 0s;
+}
