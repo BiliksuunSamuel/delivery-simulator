@@ -13,5 +13,3 @@ test
 README.md
 docker-compose.yml
 temporal-config
-Dockerfile
-.dockerignore

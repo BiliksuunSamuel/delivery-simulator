@@ -11,5 +11,3 @@ coverage
 .idea
 test
 README.md
-Dockerfile
-.dockerignore

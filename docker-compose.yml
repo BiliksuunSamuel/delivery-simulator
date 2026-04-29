@@ -84,6 +84,7 @@ services:
       CONNECTION_STRING: "mongodb://mongo:27017/delivery-sim"
       JWT_SECRET: "${JWT_SECRET:-delivery-sim-dev-secret-not-for-production}"
       TEMPORAL_URL: "temporal:7233"
+      TEMPORAL_API_KEY: "${TEMPORAL_API_KEY:-}"
     ports:
       - "14001:4001"
     restart: unless-stopped
@@ -100,6 +101,7 @@ services:
     environment:
       CONNECTION_STRING: "mongodb://mongo:27017/delivery-sim"
       TEMPORAL_URL: "temporal:7233"
+      TEMPORAL_API_KEY: "${TEMPORAL_API_KEY:-}"
     restart: unless-stopped
 
   portal:

@@ -31,6 +31,11 @@ import { TemporalClientModule } from 'nest-temporal-client';
     TemporalClientModule.forRoot({
       address: configuration().temporalUrl,
       namespace: 'default',
+      // Pass the API key when set; TLS is required by Temporal Cloud
+      // whenever apiKey is provided, so we toggle it together.
+      ...(configuration().temporalApiKey
+        ? { apiKey: configuration().temporalApiKey, tls: true }
+        : {}),
     }),
   ],
   controllers: [...controllers],

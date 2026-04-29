@@ -18,6 +18,11 @@ import { WorkflowTaskQueues } from './enums';
     TemporalClientModule.forRoot({
       address: configuration().temporalUrl,
       namespace: 'default',
+      // Pass the API key when set; TLS is required by Temporal Cloud
+      // whenever apiKey is provided, so we toggle it together.
+      ...(configuration().temporalApiKey
+        ? { apiKey: configuration().temporalApiKey, tls: true }
+        : {}),
     }),
     MongooseModule.forRoot(configuration().connectionString!, {
       retryAttempts: 5,
@@ -27,6 +32,9 @@ import { WorkflowTaskQueues } from './enums';
     TemporalHostModule.forRoot({
       connection: {
         address: configuration().temporalUrl,
+        ...(configuration().temporalApiKey
+          ? { apiKey: configuration().temporalApiKey, tls: true }
+          : {}),
       },
       namespace: 'default',
       workers: [
