@@ -1,0 +1,134 @@
+# Quick Commerce Delivery Simulator — deploy compose.
+#
+# This file is for SREs / deploy hosts that pull pre-built images from
+# Docker Hub instead of building from source. The dev-side root
+# `docker-compose.yml` builds the three Node services locally; this one
+# pulls them.
+#
+# Image tag is controlled by the IMAGE_TAG env var (defaults to `latest`).
+# Pin to a commit sha in production:
+#
+#   IMAGE_TAG=<sha> docker compose -f docker-compose.deploy.yml up -d
+
+services:
+  # ---- MongoDB (standalone) ----------------------------------------------
+  mongo:
+    image: mongo:7.0
+    container_name: delivery-mongo
+    ports:
+      - "37017:27017"
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.runCommand({ ping: 1 })"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # ---- Temporal (workflow engine) ----------------------------------------
+  temporalpg:
+    image: postgres:16
+    container_name: delivery-temporal-postgres
+    environment:
+      POSTGRES_USER: temporal
+      POSTGRES_PASSWORD: temporal
+      POSTGRES_DB: temporal
+    volumes:
+      - temporal-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U temporal"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  temporal:
+    image: temporalio/auto-setup:1.27.2
+    container_name: delivery-temporal
+    depends_on:
+      temporalpg:
+        condition: service_healthy
+    environment:
+      DB: "postgres12"
+      DB_PORT: "5432"
+      POSTGRES_USER: "temporal"
+      POSTGRES_PWD: "temporal"
+      POSTGRES_SEEDS: "temporalpg"
+      DYNAMIC_CONFIG_FILE_PATH: "config/dynamicconfig/development-sql.yaml"
+    ports:
+      - "17233:7233"
+    volumes:
+      - ./infra/temporal:/etc/temporal/config/dynamicconfig
+
+  temporal-ui:
+    image: temporalio/ui:2.37.2
+    container_name: delivery-temporal-ui
+    depends_on:
+      - temporal
+    environment:
+      TEMPORAL_ADDRESS: temporal:7233
+      TEMPORAL_CORS_ORIGINS: "*"
+    ports:
+      - "18080:8080"
+
+  # ---- Application services (pulled from Docker Hub) ---------------------
+  api:
+    image: samuelbills/delivery-api:${IMAGE_TAG:-latest}
+    container_name: delivery-api
+    pull_policy: always
+    depends_on:
+      mongo:
+        condition: service_healthy
+      temporal:
+        condition: service_started
+    environment:
+      PORT: 4001
+      CONNECTION_STRING: "mongodb://mongo:27017/delivery-sim"
+      JWT_SECRET: "${JWT_SECRET:-delivery-sim-dev-secret-not-for-production}"
+      TEMPORAL_URL: "temporal:7233"
+    ports:
+      - "14001:4001"
+    restart: unless-stopped
+
+  worker:
+    image: samuelbills/delivery-worker:${IMAGE_TAG:-latest}
+    container_name: delivery-worker
+    pull_policy: always
+    depends_on:
+      mongo:
+        condition: service_healthy
+      temporal:
+        condition: service_started
+    environment:
+      CONNECTION_STRING: "mongodb://mongo:27017/delivery-sim"
+      TEMPORAL_URL: "temporal:7233"
+    restart: unless-stopped
+
+  portal:
+    image: samuelbills/delivery-portal:${IMAGE_TAG:-latest}
+    container_name: delivery-portal
+    pull_policy: always
+    depends_on:
+      - api
+    environment:
+      NODE_ENV: production
+    ports:
+      - "13000:3000"
+    restart: unless-stopped
+
+  # ---- Optional ops UI ---------------------------------------------------
+  mongo-express:
+    image: mongo-express:1.0.2
+    container_name: delivery-mongo-express
+    depends_on:
+      mongo:
+        condition: service_healthy
+    environment:
+      ME_CONFIG_MONGODB_URL: "mongodb://mongo:27017/"
+      ME_CONFIG_BASICAUTH: "false"
+    ports:
+      - "18081:8081"
+    profiles: ["ops"]
+
+volumes:
+  mongo-data:
+  temporal-postgres-data:

@@ -1,0 +1,10 @@
+# Reusable steps that prepare a Buildx builder on the agent. Pulled into
+# each build job in azure-pipelines.yml. QEMU is registered so we can
+# also produce arm64 manifests if BUILD_PLATFORMS gets multi-arch later.
+steps:
+  - script: |
+      set -euo pipefail
+      docker run --privileged --rm tonistiigi/binfmt --install all
+      docker buildx create --use --name delivery-builder --driver docker-container
+      docker buildx inspect --bootstrap
+    displayName: Set up Docker Buildx

@@ -1,0 +1,158 @@
+# Azure Pipelines — builds the three service images and pushes them to
+# Docker Hub under the `samuelbills` namespace. The three jobs run in
+# parallel since the images are independent.
+#
+# Images are built explicitly for `linux/amd64` so they run on standard
+# x86_64 Linux servers (the SRE deploy target). To produce a multi-arch
+# image (amd64 + arm64), change `BUILD_PLATFORMS` to
+# `linux/amd64,linux/arm64`.
+#
+# Required pipeline-level setup (Project settings → Pipelines):
+#   • Service connection of type "Docker Registry" → "Docker Hub" pointing
+#     at samuelbills' Docker Hub account. Wire its name into
+#     `dockerRegistryServiceConnection` below.
+#   • Pipeline variables (Variables tab):
+#       publicApiBaseUrl  = http://<api-host>:14001     (baked into portal)
+#       publicApiMode     = real                          (baked into portal)
+#
+# Resulting image refs:
+#   docker.io/samuelbills/delivery-api:<sha|branch|latest>
+#   docker.io/samuelbills/delivery-worker:<sha|branch|latest>
+#   docker.io/samuelbills/delivery-portal:<sha|branch|latest>
+
+trigger:
+  branches:
+    include:
+      - master
+  paths:
+    exclude:
+      - "**/*.md"
+      - .gitignore
+      - README*
+
+pr:
+  branches:
+    include:
+      - master
+
+variables:
+  dockerRegistryServiceConnection: "delivery-dockerhub"
+  dockerHubNamespace: "samuelbills"
+  publicApiBaseUrl: "$(publicApiBaseUrl)"
+  publicApiMode: "$(publicApiMode)"
+  imageTagSha: "$(Build.SourceVersion)"
+  imageTagBranch: "$(Build.SourceBranchName)"
+  # x86_64 only by default. Flip to `linux/amd64,linux/arm64` to publish a
+  # multi-arch manifest (slower build; useful if Mac devs also pull).
+  BUILD_PLATFORMS: "linux/amd64"
+
+stages:
+  - stage: Build
+    displayName: Build container images
+    jobs:
+      - job: build_api
+        displayName: delivery-api
+        pool:
+          vmImage: ubuntu-latest
+        steps:
+          - checkout: self
+            fetchDepth: 1
+          - template: pipelines/buildx-setup.yml
+          - task: Docker@2
+            displayName: Login to Docker Hub
+            inputs:
+              command: login
+              containerRegistry: $(dockerRegistryServiceConnection)
+          - script: |
+              set -euo pipefail
+              IMAGE="$(dockerHubNamespace)/delivery-api"
+              docker buildx build \
+                --platform "$(BUILD_PLATFORMS)" \
+                --provenance=false \
+                -t "${IMAGE}:$(imageTagSha)" \
+                -t "${IMAGE}:$(imageTagBranch)" \
+                -t "${IMAGE}:latest" \
+                -f delivery-api/Dockerfile \
+                delivery-api \
+                --push
+            displayName: Build & push delivery-api
+          - task: Docker@2
+            displayName: Logout
+            condition: always()
+            inputs:
+              command: logout
+              containerRegistry: $(dockerRegistryServiceConnection)
+
+      - job: build_worker
+        displayName: delivery-worker
+        pool:
+          vmImage: ubuntu-latest
+        steps:
+          - checkout: self
+            fetchDepth: 1
+          - template: pipelines/buildx-setup.yml
+          - task: Docker@2
+            displayName: Login to Docker Hub
+            inputs:
+              command: login
+              containerRegistry: $(dockerRegistryServiceConnection)
+          - script: |
+              set -euo pipefail
+              IMAGE="$(dockerHubNamespace)/delivery-worker"
+              docker buildx build \
+                --platform "$(BUILD_PLATFORMS)" \
+                --provenance=false \
+                -t "${IMAGE}:$(imageTagSha)" \
+                -t "${IMAGE}:$(imageTagBranch)" \
+                -t "${IMAGE}:latest" \
+                -f delivery-worker/Dockerfile \
+                delivery-worker \
+                --push
+            displayName: Build & push delivery-worker
+          - task: Docker@2
+            displayName: Logout
+            condition: always()
+            inputs:
+              command: logout
+              containerRegistry: $(dockerRegistryServiceConnection)
+
+      - job: build_portal
+        displayName: delivery-portal
+        pool:
+          vmImage: ubuntu-latest
+        steps:
+          - checkout: self
+            fetchDepth: 1
+          - template: pipelines/buildx-setup.yml
+          - task: Docker@2
+            displayName: Login to Docker Hub
+            inputs:
+              command: login
+              containerRegistry: $(dockerRegistryServiceConnection)
+          # NEXT_PUBLIC_* are baked at build time — they end up inlined in
+          # the browser bundle, so they have to be set via --build-arg.
+          - script: |
+              set -euo pipefail
+              IMAGE="$(dockerHubNamespace)/delivery-portal"
+              docker buildx build \
+                --platform "$(BUILD_PLATFORMS)" \
+                --provenance=false \
+                --build-arg NEXT_PUBLIC_API_BASE_URL="$(publicApiBaseUrl)" \
+                --build-arg NEXT_PUBLIC_API_MODE="$(publicApiMode)" \
+                -t "${IMAGE}:$(imageTagSha)" \
+                -t "${IMAGE}:$(imageTagBranch)" \
+                -t "${IMAGE}:latest" \
+                -f delivery-portal/Dockerfile \
+                delivery-portal \
+                --push
+            displayName: Build & push delivery-portal
+          - task: Docker@2
+            displayName: Logout
+            condition: always()
+            inputs:
+              command: logout
+              containerRegistry: $(dockerRegistryServiceConnection)
+
+  # Add a Deploy stage here when you wire it up — e.g. AKS rollout, Web
+  # App for Containers, or Container Apps revision. Left blank on purpose
+  # since the deploy target hasn't been chosen yet.

@@ -1,0 +1,139 @@
+# GitHub Actions — builds the three service images and pushes them to
+# Docker Hub under the `samuelbills` namespace. Three jobs run in
+# parallel since the images are independent.
+#
+# Images are built explicitly for `linux/amd64` so they run on standard
+# x86_64 Linux servers (the SRE deploy target). To produce a multi-arch
+# image (amd64 + arm64), change `BUILD_PLATFORMS` in `env:` below to
+# `linux/amd64,linux/arm64`.
+#
+# Required repo setup (Settings → Secrets and variables → Actions):
+#   Secrets:
+#     DOCKERHUB_TOKEN     — Docker Hub access token (NOT your password).
+#                            Create at https://hub.docker.com/settings/security
+#   Variables:
+#     PUBLIC_API_BASE_URL — e.g. http://your-test-host:14001
+#                           (baked into the portal browser bundle)
+#     PUBLIC_API_MODE     — usually `real` (set `mock` to ship the
+#                           self-contained demo build)
+#
+# Resulting image refs:
+#   docker.io/samuelbills/delivery-api:<sha|branch|latest>
+#   docker.io/samuelbills/delivery-worker:<sha|branch|latest>
+#   docker.io/samuelbills/delivery-portal:<sha|branch|latest>
+
+name: Build & push images
+
+on:
+  push:
+    branches: [master]
+    paths-ignore:
+      - "**/*.md"
+      - .gitignore
+  pull_request:
+    branches: [master]
+
+env:
+  DOCKERHUB_NAMESPACE: samuelbills
+  # x86_64 only by default. Flip to `linux/amd64,linux/arm64` to publish a
+  # multi-arch manifest.
+  BUILD_PLATFORMS: linux/amd64
+
+jobs:
+  api:
+    name: delivery-api
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ env.DOCKERHUB_NAMESPACE }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build & push delivery-api
+        uses: docker/build-push-action@v6
+        with:
+          context: ./delivery-api
+          file: ./delivery-api/Dockerfile
+          platforms: ${{ env.BUILD_PLATFORMS }}
+          push: ${{ github.event_name != 'pull_request' }}
+          provenance: false
+          tags: |
+            ${{ env.DOCKERHUB_NAMESPACE }}/delivery-api:${{ github.sha }}
+            ${{ env.DOCKERHUB_NAMESPACE }}/delivery-api:${{ github.ref_name }}
+            ${{ env.DOCKERHUB_NAMESPACE }}/delivery-api:latest
+
+  worker:
+    name: delivery-worker
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ env.DOCKERHUB_NAMESPACE }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build & push delivery-worker
+        uses: docker/build-push-action@v6
+        with:
+          context: ./delivery-worker
+          file: ./delivery-worker/Dockerfile
+          platforms: ${{ env.BUILD_PLATFORMS }}
+          push: ${{ github.event_name != 'pull_request' }}
+          provenance: false
+          tags: |
+            ${{ env.DOCKERHUB_NAMESPACE }}/delivery-worker:${{ github.sha }}
+            ${{ env.DOCKERHUB_NAMESPACE }}/delivery-worker:${{ github.ref_name }}
+            ${{ env.DOCKERHUB_NAMESPACE }}/delivery-worker:latest
+
+  portal:
+    name: delivery-portal
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ env.DOCKERHUB_NAMESPACE }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # NEXT_PUBLIC_* are baked at build time — they end up inlined in
+      # the browser bundle, so they have to be set via --build-arg.
+      - name: Build & push delivery-portal
+        uses: docker/build-push-action@v6
+        with:
+          context: ./delivery-portal
+          file: ./delivery-portal/Dockerfile
+          platforms: ${{ env.BUILD_PLATFORMS }}
+          push: ${{ github.event_name != 'pull_request' }}
+          provenance: false
+          build-args: |
+            NEXT_PUBLIC_API_BASE_URL=${{ vars.PUBLIC_API_BASE_URL }}
+            NEXT_PUBLIC_API_MODE=${{ vars.PUBLIC_API_MODE }}
+          tags: |
+            ${{ env.DOCKERHUB_NAMESPACE }}/delivery-portal:${{ github.sha }}
+            ${{ env.DOCKERHUB_NAMESPACE }}/delivery-portal:${{ github.ref_name }}
+            ${{ env.DOCKERHUB_NAMESPACE }}/delivery-portal:latest
